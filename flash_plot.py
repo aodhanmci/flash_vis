@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yt
 import matplotlib.colors as colors
-
+import os
+import glob
 from make_hydro_movie import *
 from format_hydro_files import *
 
