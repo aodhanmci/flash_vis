@@ -23,51 +23,17 @@ files = range(0, 18)
 plot_B = False
 plot_bdry = False
 plot_mass = True
+eV_temp = True
 
-def get_density_hydro(ds, slc, frb):
-    density = (frb['dens'].d).T
-    density = density[~(density == 0).all(1)]
+if eV_temp:
+    temp_factor=8.62E-5
+else:
+    temp_factor=1
 
-    YE = (frb['ye'].d).T
-    YE = YE[~(YE == 0).all(1)]
-
-    SUMY = (frb['sumy'].d).T
-    SUMY = SUMY[~(SUMY == 0).all(1)]
-
-    Tele = (frb['tele'].d).T
-    Tele = Tele[~(Tele == 0).all(1)]
-
-    Tion = (frb['tion'].d).T
-    Tion = Tion[~(Tion == 0).all(1)]
-
-    Trad = (frb['trad'].d).T
-    Trad = Trad[~(Trad == 0).all(1)]
-    return density, YE, SUMY, Tele, Tion, Trad
-
-def get_B_field(ds, slc, frb):
-    Bx = (frb['magx'].d).T * np.sqrt(4*np.pi)/1E4
-    Bx = Bx[~(Bx == 0).all(1)]
-
-    By = (frb['magy'].d).T* np.sqrt(4*np.pi)/1E4
-    By = By[~(By == 0).all(1)]
-
-    Bz = (frb['magz'].d).T* np.sqrt(4*np.pi)/1E4
-    Bz = Bz[~(Bz == 0).all(1)]
-    return Bx, By, Bz
-
-
-def get_mass_hydro(ds, slc, frb):
-    Targ = (frb['targ'].d).T
-    Targ = Targ[~(Targ == 0).all(1)]
-
-    Cham = (frb['cham'].d).T
-    Cham = Cham[~(Cham == 0).all(1)]
-    return Targ, Cham
-
-
-def get_bdry(ds, slc, frb):
-    bdry = (frb['bdry'].d).T 
-    return bdry
+def get_quantity(ds, slc, frb, quantity):
+    data = (frb['dens'].d).T
+    data = data[~(data == 0).all(1)]
+    return data
 
 
 def density_plot(x, y, density, folderpath, filenumber, time, species):
@@ -285,40 +251,31 @@ for filenumber in files:
     x = (bounds[2] * 1E4) - centre[0], (bounds[3]*1E4) - centre[0]
     y = (bounds[0] * 1E4) - centre[1], (bounds[1]*1E4) - centre[1]
 
-    density, YE, SUMY, Tele, Tion, Trad = get_density_hydro(ds, slc, frb)
+    density=get_quantity(ds, slc, frb, quantity='dens')
+    YE=get_quantity(ds, slc, frb, quantity='YE')
+    SUMY=get_quantity(ds, slc, frb, quantity='SUMY')
+    electron_temp=get_quantity(ds, slc, frb, quantity='Tele')*temp_factor
+    ion_temp=get_quantity(ds, slc, frb, quantity='Tion')*temp_factor
+    rad_temp=get_quantity(ds, slc, frb, quantity='Trad')*temp_factor
 
     if plot_B:
-        Bx, By, Bz = get_B_field(ds, slc, frb)
-        #B_field_plot(x, y, Bx, folderpath + folders, hydro_file, time, vector='Bx')
-        #B_field_plot(x, y, By, folderpath + folders, hydro_file, time, vector='By')
+        Bz = get_quantity(ds, slc, frb, quantity='Bz')
         B_field_plot(x, y, Bz, folderpath + folders, hydro_file, time, vector='Bz')
-        if counter >0:
-            print(np.max(np.max(Bz)))
     if plot_bdry:
-        bdry = get_bdry(ds, slc, frb)
+        bdry = get_quantity(ds, slc, frb, quantity='bdry')
         bdry_plot(x, y, bdry, folderpath + folders, hydro_file, time, vector='bdry')
-
     if plot_mass:
-        targ, cham = get_mass_hydro(ds, slc, frb)
+        targ = get_quantity(ds, slc, frb, quantity='targ')
+        cham = get_quantity(ds, slc, frb, quantity='cham')
         mass_plot(x, y, targ, cham, folderpath + folders, hydro_file, time)
         fig4, ax4 = plt.subplots()
         central_lineout_mass(x, y, targ, cham, folderpath + folders, hydro_file, time, figure=fig4, axes=ax4)
-    # eV
-    electron_temp = Tele*8.62E-5
-    ion_temp = Tion*8.62E-5
-    rad_temp = Trad*8.62E-5
-
-    # kelvin
-    # electron_temp = Tele
-    # ion_temp = Tion
-    # rad_temp = Trad
 
     electron_density = 6.023E23*YE*density
     # ionisation = YE/SUMY
     ion_density = 6.023E23*SUMY*density
 
     # 2d colorplots
-    # density_plot(x, y, YE/SUMY, folderpath + folders, hydro_file, time, species='electron')
     density_plot(x, y, electron_density, folderpath + folders, hydro_file, time, species='electron')
     density_plot(x, y, ion_density, folderpath + folders, hydro_file, time, species='ion')
     temp_plot(x, y, electron_temp, folderpath + folders, hydro_file, time, species='electron')
