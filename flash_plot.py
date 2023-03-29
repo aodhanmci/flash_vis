@@ -4,6 +4,7 @@ import yt
 import matplotlib.colors as colors
 import os
 import glob
+import quantity_dict
 from make_hydro_movie import *
 from format_hydro_files import *
 
@@ -20,126 +21,35 @@ centre = [4900, 1500] # scale the axis to put the centre of the spot to (0, 0)
 resolution = [500, 500] # resolution of the fixed resolution buffer
 n_crit = 1.01E21 # for normalising the densirt
 folders = 'unmag_shock_1/'
-files = range(0, 18)
+files = range(0, 4)
 plot_B = False
 plot_bdry = False
 plot_mass = True
 eV_temp = True
 
+print(dict)
 if eV_temp:
     temp_factor=8.62E-5
 else:
     temp_factor=1
 
-def get_quantity(ds, slc, frb, quantity):
-    data = (frb['dens'].d).T
+def get_quantity(frb, quantity):
+    data = (frb[quantity].d).T
     data = data[~(data == 0).all(1)]
     return data
 
-
-def density_plot(x, y, density, folderpath, filenumber, time, species):
+def plot_2D(x, y, quantity, folderpath, filenumber, time, dictionary):
     fig, ax = plt.subplots()
-    cax = ax.imshow(density, cmap='Blues',
-             extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=1E14, vmax=1E21), interpolation='nearest', origin='lower', aspect='auto')
-    # cax = ax.imshow(density, norm=colors.LogNorm(vmin=1E-2, vmax=1000), cmap='Blues_r', interpolation='nearest', origin='lower', aspect='auto')
+    cax = ax.imshow(quantity, cmap=dictionary["cmap"],
+             extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=dictionary["vmin"], vmax=dictionary["vmax"]), interpolation='nearest', origin='lower', aspect='auto')
     ax.set_xlabel('x [$\mu$m]')
     ax.set_title(time + 'ps')
-    # ax.set_yticks([-10, -5, 0, 5, 10])
     ax.set_ylabel('y [$\mu$m]')
     cbar = fig.colorbar(cax)
-    # ax.set_xlim(-900, 100)
-    #ax.set_ylim(-10, 10)
-    cbar.ax.set_ylabel('n [cm$^{-3}]$')
+    cbar.ax.set_ylabel(dictionary["cbar_label"])
     fig.tight_layout()
-    plt.savefig(folderpath + filenumber + species + '_density.png', dpi=200)
+    plt.savefig(folderpath + filenumber + dictionary["name"] + '.png', dpi=200)
     plt.close()
-    #plt.show()
-
-def B_field_plot(x, y, B_field, folderpath, filenumber, time, vector):
-    fig, ax = plt.subplots()
-    
-    # cax = ax.imshow(B_field, cmap='Blues',
-            #  extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=1E-2, vmax=10), interpolation='nearest', origin='lower', aspect='auto')
-    cax = ax.imshow(B_field, cmap='RdBu',
-             extent=[x[0], x[1], y[0], y[1]], interpolation='nearest', origin='lower', aspect='auto', vmin=-50, vmax=50)
-    ax.set_xlabel('x [$\mu$m]')
-    ax.set_title(time + 'ps')
-    # ax.set_yticks([-10, -5, 0, 5, 10])
-    ax.set_ylabel('y [$\mu$m]')
-    cbar = fig.colorbar(cax)
-    #ax.set_ylim(-10, 10)
-    # ax.set_xlim(-900, 100)
-    cbar.ax.set_ylabel('B [T]')
-    fig.tight_layout()
-    plt.savefig(folderpath + filenumber + vector + '.png', dpi=200)
-    plt.close()
-
-def bdry_plot(x, y, bdry, folderpath, filenumber, time, vector):
-    fig, ax = plt.subplots()
-    
-    cax = ax.imshow(bdry, cmap='RdBu',
-             extent=[x[0], x[1], y[0], y[1]], interpolation='nearest', origin='lower', aspect='auto', vmin=-1, vmax=1)
-    ax.set_xlabel('x [$\mu$m]')
-    ax.set_title(time + 'ps')
-    #ax.set_ylim(-10, 10)
-    # ax.set_yticks([-10, -5, 0, 5, 10])
-    ax.set_ylabel('y [$\mu$m]')
-    cbar = fig.colorbar(cax)
-    # ax.set_xlim(-900, 100)
-    cbar.ax.set_ylabel('bdry')
-    fig.tight_layout()
-    plt.savefig(folderpath + filenumber + vector + '.png', dpi=200)
-    plt.close()
-
-def mass_plot(x, y, targ, cham, folderpath, filenumber, time):
-    fig, ax = plt.subplots()
-    cax = ax.imshow(targ, cmap='Blues',
-             extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=1E-8, vmax=1), interpolation='nearest', origin='lower', aspect='auto')
-    ax.set_xlabel('x [$\mu$m]')
-    ax.set_title(time + 'ps')
-    #ax.set_ylim(-10, 10)
-    # ax.set_yticks([-10, -5, 0, 5, 10])
-    ax.set_ylabel('y [$\mu$m]')
-    cbar = fig.colorbar(cax)
-    # ax.set_xlim(-900, 100)
-    # cbar.ax.set_ylabel('bdry')
-    fig.tight_layout()
-    plt.savefig(folderpath + filenumber + 'targ' + '.png', dpi=200)
-    plt.close()
-
-    fig, ax = plt.subplots()
-    cax = ax.imshow(cham, cmap='Blues',
-             extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=1E-8, vmax=1), interpolation='nearest', origin='lower', aspect='auto')
-    ax.set_xlabel('x [$\mu$m]')
-    ax.set_title(time + 'ps')
-    #ax.set_ylim(-10, 10)
-    # ax.set_yticks([-10, -5, 0, 5, 10])
-    ax.set_ylabel('y [$\mu$m]')
-    cbar = fig.colorbar(cax)
-    # ax.set_xlim(-900, 100)
-    # cbar.ax.set_ylabel('bdry')
-    fig.tight_layout()
-    plt.savefig(folderpath + filenumber + 'cham' + '.png', dpi=200)
-    plt.close()
-
-def temp_plot(x, y, temp, folderpath, filenumber, time, species):
-    fig, ax = plt.subplots()
-    cax = ax.imshow(temp, cmap='Reds',norm=colors.LogNorm(vmin=1, vmax=1e5), 
-                 extent=[x[0], x[1], y[0], y[1]], interpolation='nearest', origin='lower', aspect='auto')
-    #cax = ax.imshow(density, norm=colors.LogNorm(vmin=1E-2, vmax=1000), cmap='Blues_r', interpolation='nearest', origin='lower', aspect='auto')
-    ax.set_xlabel('x [$\mu$m]')
-    #ax.set_ylim(-10, 10)
-    ax.set_title(time + 'ps')
-    # ax.set_xlim(-1000, 100)
-    # ax.set_yticks([-10, -5, 0, 5, 10])
-    ax.set_ylabel('y [$\mu$m]')
-    cbar = fig.colorbar(cax)
-    cbar.ax.set_ylabel('T [eV]')
-    fig.tight_layout()
-    plt.savefig(folderpath + filenumber + species + '_temp.png', dpi=200)
-    plt.close()
-    #plt.show()
-
 
 def central_lineout_temp(x, y, e_temp, ion_temp, rad_temp, folderpath, filenumber, time, figure, axes):
     if resolution[0] % 2 == 1:
@@ -251,62 +161,40 @@ for filenumber in files:
     bounds = np.array(frb.bounds)
     x = (bounds[2] * 1E4) - centre[0], (bounds[3]*1E4) - centre[0]
     y = (bounds[0] * 1E4) - centre[1], (bounds[1]*1E4) - centre[1]
-
-    density=get_quantity(ds, slc, frb, quantity='dens')
-    YE=get_quantity(ds, slc, frb, quantity='YE')
-    SUMY=get_quantity(ds, slc, frb, quantity='SUMY')
-    electron_temp=get_quantity(ds, slc, frb, quantity='Tele')*temp_factor
-    ion_temp=get_quantity(ds, slc, frb, quantity='Tion')*temp_factor
-    rad_temp=get_quantity(ds, slc, frb, quantity='Trad')*temp_factor
+    
+    density=get_quantity(frb, quantity='dens')
+    YE=get_quantity(frb, quantity='ye')
+    SUMY=get_quantity(frb, quantity='sumy')
+    electron_temp=get_quantity(frb, quantity='tele')*temp_factor
+    ion_temp=get_quantity(frb, quantity='tion')*temp_factor
+    rad_temp=get_quantity(frb, quantity='trad')*temp_factor
 
     if plot_B:
-        Bz = get_quantity(ds, slc, frb, quantity='Bz')
-        B_field_plot(x, y, Bz, folderpath + folders, hydro_file, time, vector='Bz')
+        Bz = get_quantity(frb, quantity='magz')
     if plot_bdry:
-        bdry = get_quantity(ds, slc, frb, quantity='bdry')
-        bdry_plot(x, y, bdry, folderpath + folders, hydro_file, time, vector='bdry')
-    if plot_mass:
-        targ = get_quantity(ds, slc, frb, quantity='targ')
-        cham = get_quantity(ds, slc, frb, quantity='cham')
-        mass_plot(x, y, targ, cham, folderpath + folders, hydro_file, time)
-        fig4, ax4 = plt.subplots()
-        central_lineout_mass(x, y, targ, cham, folderpath + folders, hydro_file, time, figure=fig4, axes=ax4)
-
+        bdry = get_quantity(frb, quantity='bdry')
+    
     electron_density = 6.023E23*YE*density
     # ionisation = YE/SUMY
     ion_density = 6.023E23*SUMY*density
 
     # 2d colorplots
-    density_plot(x, y, electron_density, folderpath + folders, hydro_file, time, species='electron')
-    density_plot(x, y, ion_density, folderpath + folders, hydro_file, time, species='ion')
-    temp_plot(x, y, electron_temp, folderpath + folders, hydro_file, time, species='electron')
-    temp_plot(x, y, ion_temp, folderpath + folders, hydro_file, time, species='ion')
-    temp_plot(x, y, rad_temp, folderpath + folders, hydro_file, time, species='rad')
-    # 1d plots
-    fig, ax = plt.subplots()
-    central_lineout(x, y, electron_density, ion_density, folderpath + folders, hydro_file, time, figure=fig, axes=ax)
-    # x_values, ion_lineout = central_lineout(x, y, ion_density, folderpath + folders, hydro_file, species='ion', figure=fig, axes=ax)
-    fig3, ax3 = plt.subplots()
-    central_lineout_temp(x, y, electron_temp, ion_temp, rad_temp, folderpath + folders, hydro_file, time, figure=fig3, axes=ax3)
+    plot_2D(x, y, electron_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["tele"])
+    plot_2D(x, y, ion_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["tion"])
+    plot_2D(x, y, rad_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["trad"])
+    plot_2D(x, y, electron_density, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["edens"])
+    plot_2D(x, y, ion_density, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["iondens"])
+    if plot_B:
+        plot_2D(x, y, Bz, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["magz"])
 
     if counter == len(files)-1:
-        make_movie(folderpath + folders, files, 'ion_density')
-        make_movie(folderpath + folders, files, 'electron_density')
-        make_movie(folderpath + folders, files, 'electron_temp')
-        make_movie(folderpath + folders, files, 'ion_temp')
-        make_movie(folderpath + folders, files, 'rad_temp')
-        make_movie(folderpath + folders, files, '_centraltemp')
-        make_movie(folderpath + folders, files, '_centraldensity')
+        make_movie(folderpath + folders, files, 'iondens')
+        make_movie(folderpath + folders, files, 'edens')
+        make_movie(folderpath + folders, files, 'tele')
+        make_movie(folderpath + folders, files, 'tion')
+        make_movie(folderpath + folders, files, 'trad')
         if plot_B:
-            #make_movie(folderpath + folders, files, 'Bx')
-            #make_movie(folderpath + folders, files, 'By')
-            make_movie(folderpath + folders, files, 'Bz')
-        if plot_bdry:
-            make_movie(folderpath + folders, files, 'bdry')
-        if plot_mass:
-            make_movie(folderpath + folders, files, 'cham')
-            make_movie(folderpath + folders, files, 'targ')
-            make_movie(folderpath + folders, files, '_centraldensity_mass')
+            make_movie(folderpath + folders, files, 'magz')
 
         files = glob.glob(folderpath + folders + '/*.png')
         for f in files:
