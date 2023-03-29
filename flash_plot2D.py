@@ -27,7 +27,6 @@ plot_bdry = False
 plot_mass = True
 eV_temp = True
 
-print(dict)
 if eV_temp:
     temp_factor=8.62E-5
 else:
