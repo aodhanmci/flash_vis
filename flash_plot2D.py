@@ -101,6 +101,7 @@ for filenumber in files:
     x = (bounds[2] * 1E4) - centre[0], (bounds[3]*1E4) - centre[0]
     y = (bounds[0] * 1E4) - centre[1], (bounds[1]*1E4) - centre[1]
     
+    # standard quantities
     density=get_quantity(frb, quantity='dens')
     YE=get_quantity(frb, quantity='ye')
     SUMY=get_quantity(frb, quantity='sumy')
