@@ -37,9 +37,8 @@ def get_quantity(frb, quantity):
     data = data[~(data == 0).all(1)]
     return data
 
-def central_lineout(x, y, quantites, labels, folderpath, filenumber, time, dictionary, save):
+def central_lineout(x, quantites, labels, folderpath, filenumber, time, dictionary, save):
     fig, ax = plt.subplots()
-
     x_values = np.linspace(x[0], x[1], len(quantites[0]))
     counter = 0
     for quantity in quantites:
@@ -73,15 +72,14 @@ for filenumber in files:
         leftedge = ds.domain_left_edge.d*1E4
         rightedge = ds.domain_right_edge.d*1E4
 
-        y = leftedge - centre, rightedge - centre
+        x = leftedge - centre, rightedge - centre
         
-        target_centre = [rightedge[0] / 2E4, rightedge[1] / 2E4, 0] #centre of the simulation in code units (cm)
-    # [x width in cm, y in cm]
-    frb = slc.to_frb(width=(0.3, 'code_length'), resolution=resolution, height=(0.5, 'code_length'), center=target_centre)
+        target_centre = [rightedge / 2E4, 0] #centre of the simulation in code units (cm)
+    # [x width in cm]
+    frb = slc.to_frb(resolution=resolution, height=(0.5, 'code_length'), center=target_centre)
     bounds = np.array(frb.bounds)
-    x = (bounds[2] * 1E4) - centre[0], (bounds[3]*1E4) - centre[0]
-    y = (bounds[0] * 1E4) - centre[1], (bounds[1]*1E4) - centre[1]
-    
+    x = (bounds*1E4) - centre, (bounds*1E4) - centre
+
     density=get_quantity(frb, quantity='dens')
     YE=get_quantity(frb, quantity='ye')
     SUMY=get_quantity(frb, quantity='sumy')
@@ -99,11 +97,11 @@ for filenumber in files:
     ion_density = 6.023E23*SUMY*density
 
     # 1d lineouts
-    central_lineout(x, y, [electron_density, ion_density], ['e$^-$', 'ion'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["density"], save='1Ddens')
-    central_lineout(x, y, [electron_temp, ion_temp, rad_temp], ['e$^-$', 'ion', 'rad'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["temp_eV"], save='1Dtemp')
+    central_lineout(x, [electron_density, ion_density], ['e$^-$', 'ion'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["density"], save='1Ddens')
+    central_lineout(x, [electron_temp, ion_temp, rad_temp], ['e$^-$', 'ion', 'rad'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["temp_eV"], save='1Dtemp')
 
     if plot_B:
-        central_lineout(x, y, Bz, ['B$_z$'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["magz"], save='Bz')
+        central_lineout(x, Bz, ['B$_z$'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["magz"], save='Bz')
 
     if counter == len(files)-1:
         make_movie(folderpath + folders, files, '1Dtemp')
