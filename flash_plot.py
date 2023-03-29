@@ -51,87 +51,27 @@ def plot_2D(x, y, quantity, folderpath, filenumber, time, dictionary):
     plt.savefig(folderpath + filenumber + dictionary["name"] + '.png', dpi=200)
     plt.close()
 
-def central_lineout_temp(x, y, e_temp, ion_temp, rad_temp, folderpath, filenumber, time, figure, axes):
+def central_lineout(x, y, quantites, labels, folderpath, filenumber, time, dictionary, save):
+    fig, ax = plt.subplots()
     if resolution[0] % 2 == 1:
         mid = int((resolution[0] + 1) / 2)
     else:
         mid = int(resolution[0] / 2)
-    # y_values = np.linspace(y[0], y[1], len(e_temp[:, 0]))
-    # zero_line = np.argmin(np.abs(y_values))
-    e_temp = e_temp[mid, :]
-    ion_temp = ion_temp[mid, :]
-    rad_temp = rad_temp[mid, :]
-    x_values = np.linspace(x[0], x[1], len(e_temp))
-
-    axes.plot(x_values, e_temp, label='e$^-$')
-    axes.plot(x_values, ion_temp, label='ion')
-    axes.plot(x_values, rad_temp, label='rad')
-    axes.set_yscale('log')
-    axes.set_xlabel('x [$\mu$m]')
-    axes.set_ylabel('T [eV]')
-    axes.legend()
-    axes.set_title(time + 'ps')
-    # axes.set_xlim(-50, 5)
-    axes.set_ylim(1E-2, 1E4)
-    # axes.set_xlim(-900, 100)
-    axes.set_title(time + 'ns')
+    x_values = np.linspace(x[0], x[1], len(quantites[0]))
+    counter = 0
+    for quantity in quantites:
+        data = quantity[mid, :]
+        ax.plot(x_values, data, label=labels[counter])
+        counter+=1
+    ax.set_title(time + 'ps')
+    ax.set_yscale('log')
+    ax.set_xlabel('x [$\mu$m]')
+    ax.set_ylabel(dictionary["ylabel"])
+    ax.set_ylim(dictionary["min"], dictionary["max"])
+    ax.set_title(time + 'ps')
+    fig.tight_layout()
     plt.legend(frameon=False)
-    plt.savefig(folderpath + str(filenumber) + '_centraltemp.png', dpi=200)
-    plt.close()
-    return x_values, e_temp, ion_temp
-
-
-def central_lineout(x, y, electron_density, ion_density, folderpath, filenumber, time, figure, axes):
-    if resolution[0] % 2 == 1:
-        mid = int((resolution[0] + 1) / 2)
-    else:
-        mid = int(resolution[0] / 2)
-
-    electron_density = electron_density[mid, :]
-    ion_density = ion_density[mid, :]
-    x_values = np.linspace(x[0], x[1], len(electron_density))
-    axes.set_title(time + 'ps')
-    axes.plot(x_values, electron_density, label='e$^-$')
-    axes.plot(x_values, ion_density, label='ion')
-    # axes.set_ylim(1E-6, 1E3)
-    # if species == 'ion':
-    axes.set_yscale('log')
-    axes.set_xlabel('x [$\mu$m]')
-    axes.set_ylabel('n$_e$ [cm$^3$]')
-    # axes.set_xlim(-50, 5)
-    axes.set_ylim(1E14, 1E21)
-    # axes.set_xlim(-900, 100)
-    axes.set_title(time + 'ns')
-    figure.tight_layout()
-    plt.legend(frameon=False)
-    plt.savefig(folderpath + str(filenumber) + '_centraldensity.png', dpi=200)
-    plt.close()
-    return x_values, electron_density, ion_density
-
-def central_lineout_mass(x, y, targ, cham, folderpath, filenumber, time, figure, axes):
-    if resolution[0] % 2 == 1:
-        mid = int((resolution[0] + 1) / 2)
-    else:
-        mid = int(resolution[0] / 2)
-
-    targ = targ[mid, :]
-    cham = cham[mid, :]
-    x_values = np.linspace(x[0], x[1], len(targ))
-    axes.set_title(time + 'ps')
-    axes.plot(x_values, targ, label='target')
-    axes.plot(x_values, cham, label='gas')
-    # axes.set_ylim(1E-6, 1E3)
-    # if species == 'ion':
-    axes.set_yscale('log')
-    axes.set_xlabel('x [$\mu$m]')
-    axes.set_ylabel('mass')
-    # axes.set_xlim(-50, 5)
-    axes.set_ylim(1E-6, 5)
-    # axes.set_xlim(-900, 100)
-    axes.set_title(time + 'ps')
-    figure.tight_layout()
-    plt.legend(frameon=False)
-    plt.savefig(folderpath + str(filenumber) + '_centraldensity_mass.png', dpi=200)
+    plt.savefig(folderpath + str(filenumber) + save, dpi=200)
     plt.close()
 
 counter=0
@@ -179,13 +119,18 @@ for filenumber in files:
     ion_density = 6.023E23*SUMY*density
 
     # 2d colorplots
-    plot_2D(x, y, electron_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["tele"])
-    plot_2D(x, y, ion_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["tion"])
-    plot_2D(x, y, rad_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["trad"])
-    plot_2D(x, y, electron_density, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["edens"])
-    plot_2D(x, y, ion_density, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["iondens"])
+    plot_2D(x, y, electron_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["tele"])
+    plot_2D(x, y, ion_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["tion"])
+    plot_2D(x, y, rad_temp, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["trad"])
+    plot_2D(x, y, electron_density, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["edens"])
+    plot_2D(x, y, ion_density, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["iondens"])
+
+    # 1d lineouts
+    central_lineout(x, y, [electron_density, ion_density], ['e$^-$', 'ion'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["density"], save='1Ddens')
+    central_lineout(x, y, [electron_temp, ion_temp, rad_temp], ['e$^-$', 'ion', 'rad'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["temp_eV"], save='1Dtemp')
+
     if plot_B:
-        plot_2D(x, y, Bz, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict["magz"])
+        plot_2D(x, y, Bz, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["magz"])
 
     if counter == len(files)-1:
         make_movie(folderpath + folders, files, 'iondens')
@@ -193,9 +138,10 @@ for filenumber in files:
         make_movie(folderpath + folders, files, 'tele')
         make_movie(folderpath + folders, files, 'tion')
         make_movie(folderpath + folders, files, 'trad')
+        make_movie(folderpath + folders, files, '1Dtemp')
+        make_movie(folderpath + folders, files, '1Ddens')
         if plot_B:
             make_movie(folderpath + folders, files, 'magz')
-
         files = glob.glob(folderpath + folders + '/*.png')
         for f in files:
             os.remove(f)
