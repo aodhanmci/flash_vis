@@ -11,17 +11,17 @@ from format_hydro_files import *
 plt.rcParams['axes.labelsize'] = 14
 plt.rcParams['font.size'] = 14
 
-folderpath = "/Users/aodhan/Documents/HYDRO/magnetised_shocks/unmag_shock/"
+folderpath = "/Users/AMcilvenny/Library/CloudStorage/OneDrive-Queen'sUniversityBelfast/HYDRO/Conor_noCH/"
 
-filename = "unmag_shock_1_hdf5_plt_cnt_"
+filename = "TAW_2015_CSW_No_CH_hdf5_plt_cnt_"
 
 # [sim_vacuumHeight, probably (xmax-xmin)/2] in microns
-centre = [4900, 1500] # scale the axis to put the centre of the spot to (0, 0)
+centre = [4895, 0] # scale the axis to put the centre of the spot to (0, 0)
 # centre = [0, 0]
-resolution = [500, 500] # resolution of the fixed resolution buffer
+resolution = [1000, 1000] # resolution of the fixed resolution buffer
 n_crit = 1.01E21 # for normalising the densirt
-folders = 'unmag_shock_1/'
-files = range(0, 4)
+folders = 'data/'
+files = range(30, 32)
 plot_B = False
 plot_bdry = False
 plot_mass = True
@@ -41,9 +41,13 @@ def plot_2D(x, y, quantity, folderpath, filenumber, time, dictionary):
     fig, ax = plt.subplots()
     cax = ax.imshow(quantity, cmap=dictionary["cmap"],
              extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=dictionary["vmin"], vmax=dictionary["vmax"]), interpolation='nearest', origin='lower', aspect='auto')
+    # cax = ax.imshow(quantity, cmap=dictionary["cmap"],
+    #          extent=[x[0], x[1], y[0], y[1]], vmin=dictionary["vmin"], vmax=dictionary["vmax"], interpolation='nearest', origin='lower', aspect='auto')
     ax.set_xlabel('x [$\mu$m]')
     ax.set_title(time + 'ps')
     ax.set_ylabel('y [$\mu$m]')
+    # ax.set_xlim(-100, 10)
+    ax.set_ylim(-1000, 1000)
     cbar = fig.colorbar(cax)
     cbar.ax.set_ylabel(dictionary["cbar_label"])
     fig.tight_layout()
@@ -63,6 +67,7 @@ def central_lineout(x, y, quantites, labels, folderpath, filenumber, time, dicti
         ax.plot(x_values, data, label=labels[counter])
         counter+=1
     ax.set_title(time + 'ps')
+    # ax.set_xlim(-100, 5)
     ax.set_yscale('log')
     ax.set_xlabel('x [$\mu$m]')
     ax.set_ylabel(dictionary["ylabel"])
@@ -94,7 +99,7 @@ for filenumber in files:
         x = leftedge[0] - centre[0], rightedge[0] - centre[0]
         y = leftedge[1] - centre[1], rightedge[1] - centre[1]
         
-        target_centre = [rightedge[0] / 2E4, rightedge[1] / 2E4, 0] #centre of the simulation in code units (cm)
+        target_centre = [(leftedge[0] + rightedge[0]) / 2E4, (leftedge[1] + rightedge[1]) / 2E4, 0] #centre of the simulation in code units (cm)
     # [x width in cm, y in cm]
     frb = slc.to_frb(width=(0.3, 'code_length'), resolution=resolution, height=(0.5, 'code_length'), center=target_centre)
     bounds = np.array(frb.bounds)
@@ -129,8 +134,8 @@ for filenumber in files:
     central_lineout(x, y, [electron_density, ion_density], ['e$^-$', 'ion'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["density"], save='1Ddens')
     central_lineout(x, y, [electron_temp, ion_temp, rad_temp], ['e$^-$', 'ion', 'rad'], folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_1D["temp_eV"], save='1Dtemp')
 
-    if plot_B:
-        plot_2D(x, y, Bz, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["magz"])
+    # if plot_B:
+    #     plot_2D(x, y, Bz, folderpath + folders, hydro_file, time, dictionary=quantity_dict.dict_2D["magz"])
 
     if counter == len(files)-1:
         make_movie(folderpath + folders, files, 'iondens')
