@@ -11,23 +11,27 @@ from format_hydro_files import *
 plt.rcParams['axes.labelsize'] = 14
 plt.rcParams['font.size'] = 14
 
-folderpath = "/Users/AMcilvenny/Library/CloudStorage/OneDrive-Queen'sUniversityBelfast/HYDRO/magnetised_shocks/unmag_domenico/"
+# folderpath = "/Users/AMcilvenny/Documents/Hydro/magnetised_shocks/unmag_domenico/"
+folderpath = '/Users/AMcilvenny/Desktop/'
 
-filename = "unmag_shock_1_hdf5_plt_cnt_"
+filename = "TAW_2015_CSW_CH_hdf5_plt_cnt_"
 
 # [sim_vacuumHeight, probably (xmax-xmin)/2] in microns
-centre = [4900, 1500] # scale the axis to put the centre of the spot to (0, 0)
+centre = [4900, 0] # scale the axis to put the centre of the spot to (0, 0)
 # centre = [0, 0]
 resolution = [250, 250] # resolution of the fixed resolution buffer
 n_crit = 1.01E21 # for normalising the densirt
-folders = 'unmag1/'
-files = range(0, 40)
+# folders = 'unmag21/'
+folders = 'Conor/'
+files = range(50, 51)
 plot_B = False
 plot_bdry = False
 plot_mass = False
 eV_temp = True
 normalise_density = False
 time_normalise = 0 # 1002.5 but ignoring the final few ps because these aren't modelled in flash
+xlim = -5000
+ylim = 1500
 
 if eV_temp:
     temp_factor=8.62E-5
@@ -45,9 +49,11 @@ def plot_2D(x, y, quantity, folderpath, filenumber, time, dictionary):
              extent=[x[0], x[1], y[0], y[1]], norm=colors.LogNorm(vmin=dictionary["vmin"], vmax=dictionary["vmax"]), interpolation='nearest', origin='lower', aspect='auto')
     # cax = ax.imshow(quantity, cmap=dictionary["cmap"],
     #          extent=[x[0], x[1], y[0], y[1]], vmin=dictionary["vmin"], vmax=dictionary["vmax"], interpolation='nearest', origin='lower', aspect='auto')
-    ax.set_xlabel('x [$\mu$m]')
+    # ax.set_xlabel('x [$\mu$m]')
     ax.set_title(time + 'ps')
     ax.set_ylabel('y [$\mu$m]')
+    ax.set_xlim(xlim, 0)
+    ax.set_ylim(-ylim, ylim)
     # ax.set_xlim(-100, 10)
     # ax.set_ylim(-30, 30)
     cbar = fig.colorbar(cax)
@@ -71,6 +77,7 @@ def central_lineout(x, y, quantites, labels, folderpath, filenumber, time, dicti
     ax.set_title(time + 'ps')
     # ax.set_xlim(-100, 5)
     ax.set_yscale('log')
+    ax.set_xlim(xlim, 0)
     ax.set_xlabel('x [$\mu$m]')
     ax.set_ylabel(dictionary["ylabel"])
     ax.set_ylim(dictionary["min"], dictionary["max"])
