@@ -10,39 +10,47 @@ def get_quantity(frb, quantity):
 
 def get_arbitrary_line(x, y, data, initial_coordinate, final_coordinate):
     # get the straight line between the 2 points
-    slope = (initial_coordinate[1] - final_coordinate[1])/(initial_coordinate[0] - final_coordinate[0])
-    intercept = final_coordinate[1] - slope*final_coordinate[0]
-    
-    x_lineout = np.zeros_like(x)
-    y_lineout = np.zeros_like(x)
-    data_lineout = np.zeros_like(x)
-    # for every x-cordinate, plot the correspodning y cordinate
-    x_indices = np.linspace(0, len(x)-1, len(x))
-    y_index = np.zeros_like(x)
-    for x_index in x_indices:
-        # find the corresponding y for every x position according to that equation
-        y_plot = slope*x[int(x_index)] + intercept
-        corresponding_y_index = np.argmin(np.abs(y-y_plot))
-        y_index[int(x_index)] = corresponding_y_index
-        x_lineout[int(x_index)] = x[int(x_index)] # this literally does nothing other than it's here for consistency
-        y_lineout[int(x_index)] = y[corresponding_y_index]
-        data_lineout[int(x_index)] = data[corresponding_y_index, int(x_index)]
-    # clip all the data 
-    x_index_cut = x_indices[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
-    y_index_cut = y_index[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
-    x_cut = x_lineout[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
-    y_cut = y_lineout[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
-    data_lineout_cut = data_lineout[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
+    try:
+        slope = (initial_coordinate[1] - final_coordinate[1])/(initial_coordinate[0] - final_coordinate[0])
+        intercept = final_coordinate[1] - slope*final_coordinate[0]
+        x_lineout = np.zeros_like(x)
+        y_lineout = np.zeros_like(x)
+        data_lineout = np.zeros_like(x)
+        # for every x-cordinate, plot the correspodning y cordinate
+        x_indices = np.linspace(0, len(x)-1, len(x))
+        y_index = np.zeros_like(x)
+        for x_index in x_indices:
+            # find the corresponding y for every x position according to that equation
+            y_plot = slope*x[int(x_index)] + intercept
+            corresponding_y_index = np.argmin(np.abs(y-y_plot))
+            y_index[int(x_index)] = corresponding_y_index
+            x_lineout[int(x_index)] = x[int(x_index)] # this literally does nothing other than it's here for consistency
+            y_lineout[int(x_index)] = y[corresponding_y_index]
+            data_lineout[int(x_index)] = data[corresponding_y_index, int(x_index)]
 
-    return x_index_cut, y_index_cut, data_lineout_cut, x_cut, y_cut
+            # clip all the data 
+            
+            x_cut = x_lineout[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
+            y_cut = y_lineout[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
+            data_lineout_cut = data_lineout[(x_lineout<=initial_coordinate[0]) & (x_lineout>=final_coordinate[0])]
+    # quick fix for vertical lines i.e. infinite gradient
+    except ZeroDivisionError:
+        x_index = np.argmin(np.abs(x-initial_coordinate[0]))
+        data_lineout = data[:, x_index]
+        data_lineout_cut = data_lineout[(initial_coordinate[1]<y) & (y<final_coordinate[1])]
+        y_cut = y[(initial_coordinate[1]<y) & (y<final_coordinate[1])]
+        x_cut = x[x_index]*np.ones_like(y_cut) 
 
-folder = '~/Documents/Hydro/magnetised_shocks/unmag_domenico/unmag28/'
-file = 'unmag_shock_1_hdf5_plt_cnt_0020'
+
+    return data_lineout_cut, x_cut, y_cut
+
+folder = '~/Documents/Hydro/magnetised_shocks/unmag_domenico/unmag7/'
+file = 'unmag_shock_7_hdf5_plt_cnt_0002'
 filename = folder + file
 print(filename)
 ds = yt.load(filename)
 time = str(round(ds.current_time.d*1E9, 2)) 
-slc = ds.slice('z', 0.5)
+slc = ds.slice('z', 0.15)
 resolution = [250, 250]
 
 leftedge = ds.domain_left_edge.d*1E4
@@ -65,8 +73,8 @@ zbar = Ye/Sumy
 
 # put the initial coordinate in x, y in units of the data (it's been converted to microns at this stage)
 # keep the initial coordinate to the right of the final coordinate for now, it's how im clipping the data
-initial_coordinate = [-1500, -1000]
-final_coordinate = [-3000, 0]
+initial_coordinate = [-500, -500]
+final_coordinate = [-500, 500]
 
 fig, ax = plt.subplots(1, 2, figsize = (10, 6))
 cax = ax[0].imshow(electron_density, cmap='Reds', extent=[x[0], x[-1], y[0], y[-1]], norm=colors.LogNorm(vmin=1e14, vmax=1e21), interpolation='nearest', origin='lower', aspect='auto') # log colorbar
@@ -78,7 +86,7 @@ cbar.ax.set_ylabel('n$_e$ [cm$^{-3}$]')
 ax[0].set_title(f'{time}ns')
 # plt.show()
 
-x_index_cut, y_index_cut, electron_data_lineout, x_cut, y_cut = get_arbitrary_line(x, y, electron_density, initial_coordinate, final_coordinate)
+electron_data_lineout, x_cut, y_cut = get_arbitrary_line(x, y, electron_density, initial_coordinate, final_coordinate)
 distance = np.sqrt((x_cut-initial_coordinate[0])**2 + (y_cut-initial_coordinate[1])**2)
 ax[0].plot(x_cut, y_cut, '--')
 ax[1].plot(distance, electron_data_lineout)
